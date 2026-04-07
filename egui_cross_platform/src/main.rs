@@ -2,13 +2,25 @@
 
 use eframe::egui;
 
+#[cfg(not(target_arch = "wasm32"))]
+use egui::IconData;
+
+mod app;
+use app::MyApp;
+
 // desktop version
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result {
-	let options = eframe::NativeOptions::default();
+
+	let options: eframe::NativeOptions = eframe::NativeOptions {
+		viewport: egui::ViewportBuilder::default()
+			.with_inner_size([400.0, 300.0])
+			.with_icon(load_icon()),
+		..Default::default()
+	};
 
 	eframe::run_native(
-		"egui App",
+		"egui (Desktop App)",
 		options,
 		Box::new(|cc| {
 			cc.egui_ctx.set_visuals(egui::Visuals::dark());
@@ -16,6 +28,31 @@ fn main() -> eframe::Result {
 		}),
 	)
 }
+
+
+// icon loading function (for desktop)
+#[cfg(not(target_arch = "wasm32"))]
+fn load_icon() -> IconData {
+
+	let (icon_rgba, icon_width, icon_height) = {
+		let icon: &[u8] = include_bytes!("../assets/icon.png");
+		let image: image::ImageBuffer<image::Rgba<u8>, Vec<u8>> = image::load_from_memory(icon)
+			.expect("Failed to load icon")
+			.into_rgba8();
+
+		let (width, height) = image.dimensions();
+		let rgba: Vec<u8>             = image.into_raw();
+
+		(rgba, width, height)
+	};
+
+	IconData {
+		rgba  : icon_rgba,
+		width : icon_width,
+		height: icon_height,
+	}
+}
+
 
 // web version
 #[cfg(target_arch = "wasm32")]
@@ -66,40 +103,3 @@ fn main() {
 	});
 }
 
-#[derive(Default)]
-struct MyApp {
-	name:    String,
-	age:     u32,
-	counter: i32,
-}
-
-impl eframe::App for MyApp {
-	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-		egui::CentralPanel::default().show(ctx, |ui| {
-			ui.heading("Welcome to egui!");
-
-			ui.separator();
-
-			ui.horizontal(|ui| {
-				ui.label("Your name: ");
-				ui.text_edit_singleline(&mut self.name);
-			});
-
-			ui.add(egui::Slider::new(&mut self.age, 0..=120).text("age"));
-
-			if ui.button("Increment Counter").clicked() {
-				self.counter += 1;
-			}
-
-			ui.label(format!("Counter: {}", self.counter));
-
-			ui.separator();
-
-			if !self.name.is_empty() {
-				ui.label(format!("Hello, {}! You are {} years old.", self.name, self.age));
-			}
-			// ui.label(format!("Position souris : {:?}", ui.input(|i| i.pointer.hover_pos())));
-			// ui.label(format!("Taille écran : {:?}", ui.ctx().screen_rect()));
-		});
-	}
-}

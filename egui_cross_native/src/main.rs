@@ -15,8 +15,8 @@ fn main() -> eframe::Result {
 
 #[derive(Default)]
 struct MyApp {
-	name: String,
-	age: u32,
+	name   : String,
+	age    : u32,
 	counter: i32,
 }
 
